@@ -1,4 +1,6 @@
 #lang racket
+; 1.1
+
 ;1.1.4, 1.1.5
 (define (square x) (* x x))
 (define (sum-of-squares x y) (+ (square x) (square y)))
@@ -49,11 +51,16 @@
 ;exercise 1.6
 (define (new-if predicate then-clause else-clause)
   (cond (predicate then-clause)(else else-clause)))
-; Because of applicative-order sqrt-iter will be called infinite times
-;(new-if applicative eval) while the is is normal eval
+; Because of applicative-order sqrt-iter will be called infinite times,
+; new-if applicative eval while the if is normal eval
 
 (define (good-enough? guess x)
   (< (abs (- (square guess) x)) 0.001))
+
+; exercise 1.7
+; fix for small numbers, I could not recreate the problem for large numbers
+(define (good-enough?2 guess x)
+  (< (abs (- (square guess) x)) (if (< x 1) (* 0.001 x) 0.001)))
 
 
 (define (sqrt-iter guess x)
@@ -68,4 +75,58 @@
 
 
 
-        
+; exercise 1.8
+(define (improveC guess x)(/ (+ (/ x (square guess)) (* 2 guess)) 3))
+
+(define (good-enough?C guess x)
+  (< (abs (- (square guess) x)) (if (< x 1) (* 0.001 x) 0.001)))
+
+(define (cube-root-iter guess x)
+  (if (good-enough?C guess x) guess (cube-root-iter (improveC guess x) x)))
+
+(define (cube-root x)(cube-root-iter 1.1 x))
+
+
+(define (sqrt-block x)
+  (define (good-enough? guess)(< (abs (- (square guess) x)) (if (< x 1) (* 0.001 x) 0.001)))
+  (define (improve guess)(average guess (/ x guess)))
+  (define (sqrt-iter guess)(if (good-enough? guess) guess (sqrt-iter (improve guess))))
+  (sqrt-iter 1.0)
+  )
+
+
+;1.2
+(define (factorial n)(if (= n 1) 1 (* n (factorial (- n 1)))))
+
+(define (factorial-iter n)
+  (define (fact-iter product counter max-count)
+    (if (> counter max-count)
+        product
+        (fact-iter (* counter product) (+ counter 1) (max-count))))
+    (fact-iter 1 1 n)
+  )
+
+(define (factorial-iter-local n)
+  (define (iter product counter)
+    (if (> counter n)
+        product
+        (iter (* counter product) (+ counter 1))))
+    (iter 1 1)
+  )
+
+;1.9 1. recursive process, iterative process
+
+;1.10 Ackermann function
+(define (A x y)
+  (cond
+    ((= y 0) 0)
+    ((= x 0) (* 2 y))
+    ((= y 1) 2)
+    (else (A (- x 1)(A x (- y 1))))
+    ))
+
+;1. 1024 (2^10)
+;2.-3. 65536 (2^(2^4))
+;4. 2n
+;5. 2^n
+;6. 2^(2^n)
