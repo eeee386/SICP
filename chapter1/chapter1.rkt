@@ -356,3 +356,59 @@
   (define (add-dx x)(+ x dx))
   (* (sum f (+ a (/ dx 2.0)) add-dx b) dx)
   )
+
+(define (sum-n term a next b counter inc-counter n)
+   (if (> counter n) 0 (+ (term a)(sum-n term (next a) next b (inc-counter counter) inc-counter n))))
+
+(define (sumi-n term a next b counter inc-counter n)
+  (define (iter a result counter) 
+    (if (> counter n)
+        result
+        (iter (next a) (+ (term a) result) (inc-counter counter))))
+  (iter a 0 counter)
+  )
+
+; 1.29 Simpson's rule
+(define (simpson-integer f a b n)
+  (define counter 1)
+  (define (inc-c counter)(+ counter 2))
+  (define h (/ (- b a) n))
+  (define cons (/ h 3))
+  (define (sf x) (+ (* 4 (f x)) (* 2 (f (+ x h)))))
+  (define (inc-x x) (+ x (* 2 h)))
+  (define series (+ (f a) (sumi-n sf (inc-x a) inc-x b counter inc-c n)))
+    (if (= (remainder n 2) 0) (* cons (+ series (* 2 (+ a (* n h))))) (* cons series))
+  )
+
+; 1.30
+(define (sumi term a next b)
+  (define (iter a result)
+    (if (> a b) result (iter (next a) (+ (term a) result))))
+  (iter a 0)
+  )
+
+(define (sum-cubes-hofi a b)(sumi cube a inc b))
+
+;1.31
+; a
+(define (product term a next b)
+  (if (> a b) 1 (* (term a)(product term (next a) next b))))
+
+; b
+(define (producti term a next b)
+  (define (iter a result)
+  (if (> a b) result (iter (next a) (* a result))))
+  (iter a 1)
+  )
+
+(define (factorial2r a b)
+  (product identity a inc b))
+
+(define (factorial2i a b)
+  (producti identity a inc b))
+
+(define (pi-d4 b)
+  (define (next a) (+ a 2))
+  (define (term a) (/ (* a (+ a 2))(* (+ a 1)(+ a 1))))
+  (product term 2.0 next b)
+  )
