@@ -397,7 +397,7 @@
 ; b
 (define (producti term a next b)
   (define (iter a result)
-  (if (> a b) result (iter (next a) (* a result))))
+  (if (> a b) result (iter (next a) (* (term a) result))))
   (iter a 1)
   )
 
@@ -410,5 +410,55 @@
 (define (pi-d4 b)
   (define (next a) (+ a 2))
   (define (term a) (/ (* a (+ a 2))(* (+ a 1)(+ a 1))))
-  (product term 2.0 next b)
+  (producti term 2.0 next b)
   )
+
+; exercise 1.32
+(define (accumulate combiner init-value term a next b)
+  (if (> a b)
+      init-value
+      (combiner
+       (term a)
+       (accumulate combiner init-value term (next a) next b)))
+  )
+
+(define (accumulatei combiner init-value term a next b)
+  (define (iter a result)
+    (if (> a b)
+        result
+        (iter (next a) (combiner (term a) result)))
+    )
+  (iter a init-value)
+  )
+
+; 1.33
+(define (filtered-accumulate combiner init-value term a next b predicate)
+  (if (> a b)
+      init-value
+      (if (predicate a)
+       (combiner
+        (term a)
+        (filtered-accumulate combiner init-value term (next a) next b predicate))
+       (filtered-accumulate combiner init-value term (next a) next b predicate)
+       )
+      )
+  )
+
+(define (filtered-accumulatei combiner init-value term a next b predicate)
+  (define (iter a result)
+  (if (> a b)
+      result
+      (if (predicate a)
+          (iter (next a) (combiner (term a) result))
+          (iter (next a) result)
+          )
+      ))
+  (iter a init-value)
+  )
+
+;(filtered-accumulate + 0 square 1 inc 6 prime?)
+
+(define (sum-of-relative-primes-to-n n)
+  (define (predicate x) (gcd x n))
+  (filtered-accumulatei * 1 identity 1 inc n predicate)
+  ) 
