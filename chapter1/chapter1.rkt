@@ -545,3 +545,52 @@
 ;exercise 1.36
 
 (define (sqrt-f x)(fixed-point (lambda (y) (average y (/ x y))) 1.0))
+
+
+; exercise 1.37
+(define (cont-frac n d k counter)
+    (if (> counter k)
+        0
+        (/ (n counter) (+ (d counter) (cont-frac n d k (+ counter 1)))))
+    )
+
+(define (cont-fraci n d k init-value)
+  (define (iter counter result)
+    (if (= counter init-value)
+        result
+        (iter
+         (- counter 1)
+         (/ (n counter) (+ (d counter) result)))
+    )
+    )
+  (iter k 1.0)
+  )
+; (cont-frac (lambda (i) 1.0) (lambda (i) 1.0) 16 1)
+; (cont-fraci (lambda (i) 1.0) (lambda (i) 1.0) 16 1)
+
+; exercise 1.38
+; won't with iterative because it goes from the back, could be fixed
+(define (euler-exp k)
+  (let ((dr 0))
+  (cont-frac
+   (lambda (i) 1.0)
+   (lambda (i)
+     (display i)
+     (newline)
+     (if (= (remainder i 3) 2)
+         ((lambda ()
+           (set! dr (+ dr 2))
+            dr))
+         1
+         )) k 1)))
+
+; exercise 1.39
+
+(define (tan-cf x k)
+  (/ x (+ 1 (cont-frac
+             (lambda (x) (-(square x)))
+             (lambda (k) (- (* 2 k) 1))
+             k
+             2.0
+             )))
+  )
