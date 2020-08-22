@@ -517,8 +517,8 @@
 ;(half-interval-method (lambda (x) (- (* x x x)(* 2 x) 3)) 1.0 2.0)
 
 (define tolerance 0.00001)
+(define (close-enough? v1 v2)(< (abs (- v1 v2)) tolerance))
 (define (fixed-point f first-guess)
-  (define (close-enough? v1 v2)(< (abs (- v1 v2)) tolerance))
   (define (try guess)
     (let ((next (f guess)))
       (display guess)
@@ -588,9 +588,103 @@
 
 (define (tan-cf x k)
   (/ x (+ 1 (cont-frac
-             (lambda (x) (-(square x)))
-             (lambda (k) (- (* 2 k) 1))
+             (lambda (i) (* x x -1))
+             (lambda (k) (- (* 2.0 k) 1))
              k
              2.0
              )))
   )
+
+
+; 1.3.4
+(define (average-damp f)(lambda (x)(average x (f x))))
+
+(define (sqrt-fixed x)(fixed-point (average-damp (lambda (y) (/ x y))) 1.0))
+(define (cube-root-fixed x)(fixed-point (average-damp (lambda (y) (/ x (square y)))) 1.0))
+
+(define dx 0.00001)
+(define (deriv g)
+  (lambda (x) (/ (- (g (+ x dx)) (g x)) dx)))
+
+
+(define (newton-transform g)
+  (lambda (x) (- x (/ (g x) ((deriv g) x)))))
+
+
+(define (newton-method g guess)
+  (fixed-point (newton-transform g) guess))
+
+(define (sqrt-newton x) (newton-method (lambda (y) (- (square y) x)) 1.0))
+
+(define (fixed-point-of-transform g transform guess) (fixed-point (transform g) guess))
+(define (sqrt-trans x) (fixed-point-of-transform (lambda (y) (/ x y)) average-damp 1.0))
+(define (sqrt-newton-trans x)
+  (fixed-point-of-transform
+   (lambda (y) (- (square y) x))
+   newton-transform
+   1.0))
+
+; 1.40
+(define (cubic a b c) (lambda (x) (+ (cube x) (* a (square x)) (* b x) c)))
+
+;1.41
+(define (double-proc proc)
+  (lambda (x) (proc (proc x)))
+  )
+
+; (((double-proc (double-proc double-proc)) inc) 5)
+
+;1.42
+(define (compose f g)
+  (lambda (x) (f (g x))))
+
+; 1.43
+(define (repeated f n)
+  (define (iter n result)
+    (if (> 1 n)
+        result
+        (iter (- n 1) (f result))
+        )
+    )
+  (lambda (x) (iter n x))
+  )
+
+
+; 1.44
+(define (average-three a b c) (/ (+ a b c) 3))
+(define (smooth f)
+  (lambda (x) (average-three (f (- x dx)) (f x) (f (+ x dx)))))
+;(((repeated smooth 5) square) 2)
+
+; 1.45
+;(define (sqrt-fixed x)(fixed-point (average-damp (lambda (y) (/ x y))) 1.0))
+;(floor (log 3 2))
+
+(define (nth-root x n)
+  (fixed-point
+   ((repeated average-damp (floor (log n 2))) (lambda (y) (/ x (expt y (- n 1)))))
+   1.0
+   )
+  )
+
+
+;1.46
+(define (iterative-improve is-good-enough? improve-guess)
+  (define (iter guess x)
+        (if (is-good-enough? guess x)
+            guess
+            (iter (improve-guess guess x) x)
+            ))
+  (lambda (guess x) (iter guess x))
+  )
+
+;(define (sqrt-iter guess x)
+;  (if (good-enough? guess x)
+;      guess
+;      (sqrt-iter(improve guess x) x)))
+
+(define (sqrt-iter-imp guess x)
+  ((iterative-improve good-enough? improve) guess x)
+  )
+
+;1.46 fixed point missing
